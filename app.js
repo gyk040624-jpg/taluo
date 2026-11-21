@@ -7,20 +7,28 @@ let flippedCount = 0;
 let modalCard = null;
 let modalUpright = true;
 
-// DOM 引用
 const hintText = document.getElementById('hint-text');
 const startBtn = document.getElementById('start-btn');
 const interpretBtn = document.getElementById('interpret-btn');
 const insightPanel = document.getElementById('insight-panel');
 const insightText = document.getElementById('insight-text');
+const questionWrap = document.getElementById('question-wrap');
+const questionInput = document.getElementById('question-input');
 
-// 1. 意图切换
+// 1. 意图切换：仅点击「综合」时展示输入框
 document.getElementById('intent-pills').addEventListener('click', (e) => {
   const pill = e.target.closest('.pill');
   if (!pill || drawnCards.length > 0) return;
+
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
   pill.classList.add('active');
   currentIntent = pill.dataset.intent;
+
+  if (currentIntent === '综合') {
+    questionWrap.classList.remove('hidden');
+  } else {
+    questionWrap.classList.add('hidden');
+  }
 });
 
 // 2. 抽牌发牌
@@ -28,10 +36,10 @@ startBtn.addEventListener('click', async () => {
   drawnCards = drawSpread(3);
   flippedCount = 0;
   startBtn.classList.add('hidden');
-  hintText.textContent = '星门已启，请依次点击翻开三张命运牌';
+  hintText.textContent = '星门已启，依次翻开三张命运牌';
 
   for (let i = 0; i < 3; i++) {
-    await new Promise(r => setTimeout(r, 260));
+    await new Promise(r => setTimeout(r, 240));
     const card = drawnCards[i];
     const cardEl = document.getElementById(`card-${i}`);
     const emojiEl = document.getElementById(`emoji-${i}`);
@@ -59,7 +67,7 @@ document.querySelectorAll('.slot').forEach(slot => {
       cardEl.classList.add('is-flipped');
       flippedCount++;
       if (flippedCount === 3) {
-        hintText.textContent = '点击任意牌面可查看基础释义，或召唤星象综合解读';
+        hintText.textContent = '点牌面可看单牌意象，或召唤星象解读';
         interpretBtn.classList.remove('hidden');
       }
     } else {
@@ -70,7 +78,7 @@ document.querySelectorAll('.slot').forEach(slot => {
 
 // 4. 调用后端代理并流式渲染
 interpretBtn.addEventListener('click', async () => {
-  const question = document.getElementById('question-input').value.trim();
+  const question = currentIntent === '综合' ? questionInput.value.trim() : '';
   const cardsSummary = drawnCards
     .map((c, idx) => `${['前因', '当下', '后果'][idx]}：${c.n}（${c.isUpright ? '正位' : '逆位'}）`)
     .join('；');
@@ -87,7 +95,10 @@ interpretBtn.addEventListener('click', async () => {
       body: JSON.stringify({ intent: currentIntent, question, cards: cardsSummary })
     });
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      const errDetail = await res.text();
+      throw new Error(`HTTP ${res.status} | ${errDetail}`);
+    }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -99,7 +110,7 @@ interpretBtn.addEventListener('click', async () => {
       buffer += decoder.decode(value, { stream: true });
 
       const lines = buffer.split('\n');
-      buffer = lines.pop(); // 保留未完整的一行
+      buffer = lines.pop();
 
       for (const line of lines) {
         const trimmed = line.trim();
@@ -112,20 +123,20 @@ interpretBtn.addEventListener('click', async () => {
           const delta = json.choices?.[0]?.delta?.content || '';
           if (delta) insightText.textContent += delta;
         } catch {
-          // 忽略非 JSON 心跳包
+          // 忽略心跳包
         }
       }
     }
 
     interpretBtn.classList.add('hidden');
   } catch (err) {
-    insightText.textContent = `星象连接中断（${err.message}），请检查网络或后端配置后重试。`;
+    insightText.textContent = `星象连接中断（${err.message}），请稍后重试。`;
     interpretBtn.disabled = false;
     interpretBtn.textContent = '✦ 重新召唤解读';
   }
 });
 
-// 5. 重置牌局（无需刷新整个页面）
+// 5. 重置牌局
 document.getElementById('reset-btn').addEventListener('click', () => {
   drawnCards = [];
   flippedCount = 0;
@@ -137,7 +148,7 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   interpretBtn.disabled = false;
   interpretBtn.textContent = '✦ 召唤星象解读';
   startBtn.classList.remove('hidden');
-  hintText.textContent = '静心凝神，点击下方按钮开启星门';
+  hintText.textContent = '静心凝神，点击下方开启星门';
 });
 
 // 6. 单牌弹窗与正逆位切换
@@ -173,7 +184,9 @@ const libOverlay = document.getElementById('lib-overlay');
 const libGrid = document.getElementById('lib-grid');
 
 function renderLibrary(keyword = '') {
-  const list = FULL_DECK.filter(c => c.n.includes(keyword) || c.up.d.includes(keyword) || c.rev.d.includes(keyword));
+  const list = FULL_DECK.filter(c =>
+    c.n.includes(keyword) || c.up.d.includes(keyword) || c.rev.d.includes(keyword)
+  );
   libGrid.innerHTML = list.map(c => `
     <div class="lib-item" data-id="${c.id}">
       <div style="font-size:1.7rem;margin-bottom:4px;">${c.e}</div>
