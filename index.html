@@ -3,30 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>塔罗占卜</title>
+  <title>星寰全书 · 塔罗占卜</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@600;700&family=Noto+Serif+SC:wght@400;600;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <div class="ambient-glow"></div>
-  <div class="stars-bg"></div>
+  <!-- 多层星空背景 -->
+  <div class="sky-backdrop" aria-hidden="true">
+    <div class="nebula"></div>
+    <div class="stars-layer stars-sm"></div>
+    <div class="stars-layer stars-md"></div>
+    <div class="meteor meteor-1"></div>
+    <div class="meteor meteor-2"></div>
+  </div>
 
   <header class="hero">
-    <div class="badge">ARCANA ENGINE · V2</div>
+    <div class="orbit-ring">✦ ✧ ✦</div>
     <h1>星 寰 全 书</h1>
     <p class="subtitle">STELLAR TAROT ORACLE</p>
   </header>
 
   <main class="container">
-    <!-- 意图与自定义问题 -->
+    <!-- 意图与条件展开输入框 -->
     <section class="query-card glass">
       <div class="intent-pills" id="intent-pills">
-        <button class="pill active" data-intent="工作">💼 工作事业</button>
-        <button class="pill" data-intent="爱情">💞 情感关系</button>
-        <button class="pill" data-intent="学习">📚 学业成长</button>
-        <button class="pill" data-intent="综合">🌌 综合指引</button>
+        <button class="pill" data-intent="学习">学习</button>
+        <button class="pill active" data-intent="工作">工作</button>
+        <button class="pill" data-intent="爱情">爱情</button>
+        <button class="pill" data-intent="综合">综合</button>
       </div>
-      <input type="text" id="question-input" maxlength="80" placeholder="默念你的具体困惑（选填，留空则按所选领域推演）...">
+      <div class="question-wrap hidden" id="question-wrap">
+        <input type="text" id="question-input" maxlength="80" placeholder="写下你想问的事（留空则做综合推演）...">
+      </div>
     </section>
 
     <!-- 三牌阵舞台 -->
@@ -34,8 +42,8 @@
       <div class="slot" data-index="0">
         <div class="slot-meta"><span>前因</span><small>PAST</small></div>
         <div class="card-3d" id="card-0">
-          <div class="card-face card-back"><span class="sigil">✧</span></div>
-          <div class="card-face card-front">
+          <div class="card-face card-back glass-card"><span class="sigil">✧</span></div>
+          <div class="card-face card-front glass-card-open">
             <div class="card-emoji" id="emoji-0"></div>
             <div class="card-name" id="name-0"></div>
             <div class="card-pos" id="pos-0"></div>
@@ -46,8 +54,8 @@
       <div class="slot" data-index="1">
         <div class="slot-meta"><span>当下</span><small>PRESENT</small></div>
         <div class="card-3d" id="card-1">
-          <div class="card-face card-back"><span class="sigil">✧</span></div>
-          <div class="card-face card-front">
+          <div class="card-face card-back glass-card"><span class="sigil">✧</span></div>
+          <div class="card-face card-front glass-card-open">
             <div class="card-emoji" id="emoji-1"></div>
             <div class="card-name" id="name-1"></div>
             <div class="card-pos" id="pos-1"></div>
@@ -58,8 +66,8 @@
       <div class="slot" data-index="2">
         <div class="slot-meta"><span>后果</span><small>FUTURE</small></div>
         <div class="card-3d" id="card-2">
-          <div class="card-face card-back"><span class="sigil">✧</span></div>
-          <div class="card-face card-front">
+          <div class="card-face card-back glass-card"><span class="sigil">✧</span></div>
+          <div class="card-face card-front glass-card-open">
             <div class="card-emoji" id="emoji-2"></div>
             <div class="card-name" id="name-2"></div>
             <div class="card-pos" id="pos-2"></div>
@@ -68,18 +76,18 @@
       </div>
     </section>
 
-    <p class="hint-text" id="hint-text">静心凝神，点击下方按钮开启星门</p>
+    <p class="hint-text" id="hint-text">静心凝神，点击下方开启星门</p>
 
     <!-- 操作按钮 -->
     <div class="action-bar">
-      <button class="btn-primary" id="start-btn">开启星门 · 抽取三牌</button>
+      <button class="btn-primary glass" id="start-btn">开启星门 · 抽取三牌</button>
       <button class="btn-gold hidden" id="interpret-btn">✦ 召唤星象解读</button>
     </div>
 
     <!-- AI 解读输出面板 -->
     <section class="insight-box glass hidden" id="insight-panel">
       <div class="insight-header">
-        <span>✦ 命运之书启示 ✦</span>
+        <span>✦ 星寰启示 ✦</span>
         <button class="btn-text" id="reset-btn">重占一局 ↺</button>
       </div>
       <div class="insight-body" id="insight-text"></div>
@@ -87,7 +95,7 @@
   </main>
 
   <!-- 悬浮牌库入口 -->
-  <button class="fab-lib" id="open-lib-btn" title="查看78张全书牌库">牌库</button>
+  <button class="fab-lib glass" id="open-lib-btn" title="查看78张全书牌库">牌库</button>
 
   <!-- 78张牌库抽屉 -->
   <div class="overlay hidden" id="lib-overlay">
@@ -96,7 +104,7 @@
         <span>✦ 星寰全书（78张）</span>
         <button class="btn-text" id="close-lib-btn">关闭 ✕</button>
       </div>
-      <input type="search" id="lib-search" placeholder="搜索牌名或花色（如：愚者、圣杯、逆位）...">
+      <input type="search" id="lib-search" placeholder="搜索牌名或关键词（如：愚者、圣杯）...">
     </div>
     <div class="lib-grid" id="lib-grid"></div>
   </div>
@@ -108,7 +116,7 @@
       <h3 class="modal-title" id="modal-title"></h3>
       <p class="modal-desc" id="modal-desc"></p>
       <div class="modal-advice">
-        <strong>✦ 指引：</strong>
+        <strong>✦ 启示：</strong>
         <span id="modal-advice"></span>
       </div>
       <div class="modal-actions">
