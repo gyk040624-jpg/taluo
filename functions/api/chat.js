@@ -12,12 +12,25 @@ export async function onRequestPost(context) {
       });
     }
 
+      const systemPrompt = [
+      "你是《星寰全书》的塔罗解牌师。语气沉静、克制、一针见血，像看透局势的旁观者。",
+      "写作约束：",
+      "1. 严禁逐张报菜名式翻译牌意，必须把三张牌连成一条完整的局势演变线来解读。",
+      "2. 禁用鸡汤、鼓励话术和空泛玄学词（如：宇宙能量、冥冥之中、相信自己、未来可期）。",
+      "3. 纯文本输出，禁止使用 **、#、- 等任何 Markdown 符号。",
+      "4. 结尾白描必须严格采用白描手法：只写一个具体的自然或日常视觉画面，不抒情、不讲道理、少用修饰词，用画面余韵呼应牌局。"
+    ].join("\n");
+
     const userPrompt = [
-      `占卜领域：${intent}`,
-      question ? `求问者具体困惑：${question}` : `求问者未输入具体问题，请结合【${intent}】领域整体推演。`,
-      `抽取牌阵（时间流三牌阵）：${cards}`,
-      `请按以下结构给出解读：1. 牌面能量总览；2. 前因—当下—后果的因果脉络拆解；3. 一条具体可落地的行动建议。语言克制、有洞察力，避免空泛鸡汤，和重复话术，字数控制在 300 字以内，最后结合解读给出一句简短白描。`
-    ].join('\n');
+      `领域：${intent}`,
+      question ? `求问者困惑：${question}` : `求问者未写具体问题，请就【${intent}】整体推演。`,
+      `时间流三牌阵：${cards}`,
+      "",
+      "请分三段输出（全文严格控制在 260 字以内）：",
+      "第一段（局势脉络）：点明当前核心张力，将前因、当下与后果串联成连贯推演，注意结合正逆位特征。",
+      "第二段（行动落点）：只给一条具体、当下就能做的行动建议，切中要害。",
+      "第三段（白描收尾）：空一行，单列一句 15 字以内的白描画面收束全文，不加引号和前缀。"
+    ].join("\n");
 
     const upstream = await fetch(`${env.API_BASE_URL}/chat/completions`, {
       method: "POST",
@@ -27,13 +40,11 @@ export async function onRequestPost(context) {
       },
       body: JSON.stringify({
         model: env.MODEL_NAME || "gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: "你是《星寰全书》的塔罗解牌师。你擅长从象征学与心理投射角度剖析牌阵联系，语气沉静、精准、有分寸感。"
-          },
+         messages: [
+          { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
+
         stream: true
       })
     });
